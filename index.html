@@ -1,179 +1,239 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Student QR Generator with GPS</title>
-    <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.1/build/qrcode.min.js"></script>
-    <style>
-      body {
-        font-family: Arial, sans-serif;
-        max-width: 400px;
-        margin: 30px auto;
-        padding: 0 15px;
-      }
-      label {
-        display: block;
-        margin-top: 15px;
-      }
-      input {
-        width: 100%;
-        padding: 8px;
-        font-size: 16px;
-      }
-      button {
-        margin-top: 20px;
-        padding: 10px 20px;
-        font-size: 16px;
-        cursor: pointer;
-      }
-      #qr {
-        margin-top: 30px;
-        text-align: center;
-      }
-      #status {
-        margin-top: 15px;
-        font-style: italic;
-        color: #555;
-      }
-    </style>
-    <link rel="manifest" href="manifest.json" />
-    <meta name="theme-color" content="#0d6efd" />
-  </head>
-  <body>
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Student QR Generator with GPS</title>
+  <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.1/build/qrcode.min.js"></script>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #4a90e2, #50e3c2);
+      min-height: 100vh;
+      margin: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 20px;
+      color: #222;
+    }
+    .container {
+      background: #fff;
+      border-radius: 15px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.2);
+      max-width: 400px;
+      width: 100%;
+      padding: 30px 25px;
+      text-align: center;
+    }
+    h2 {
+      margin-bottom: 25px;
+      color: #4a90e2;
+      font-weight: 700;
+      letter-spacing: 1.2px;
+    }
+    label {
+      display: block;
+      margin: 12px 0 6px;
+      font-weight: 600;
+      color: #444;
+      text-align: left;
+    }
+    input {
+      width: 100%;
+      padding: 12px 15px;
+      font-size: 16px;
+      border-radius: 8px;
+      border: 1.8px solid #ccc;
+      transition: border-color 0.3s ease;
+      outline-offset: 2px;
+    }
+    input:focus {
+      border-color: #4a90e2;
+      outline: none;
+      box-shadow: 0 0 8px #4a90e2aa;
+    }
+    button {
+      margin-top: 25px;
+      padding: 14px 0;
+      width: 100%;
+      background: #4a90e2;
+      border: none;
+      border-radius: 10px;
+      color: white;
+      font-weight: 700;
+      font-size: 18px;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+      user-select: none;
+    }
+    button:hover {
+      background: #357ABD;
+    }
+    #qrSection {
+      margin-top: 30px;
+    }
+    #qr {
+      border: 8px solid #4a90e2;
+      border-radius: 15px;
+      background: white;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+      max-width: 100%;
+    }
+    #status {
+      margin-top: 18px;
+      font-style: italic;
+      color: #666;
+      min-height: 22px;
+      font-weight: 600;
+    }
+    #resetBtn {
+      margin-top: 20px;
+      background: #e94e77;
+      border-radius: 10px;
+    }
+    #resetBtn:hover {
+      background: #cc3a61;
+    }
+  </style>
+  <link rel="manifest" href="manifest.json" />
+  <meta name="theme-color" content="#4a90e2" />
+</head>
+<body>
+  <div class="container">
     <h2>Student QR Generator</h2>
 
     <div id="inputForm" style="display: none">
-      <label for="nameInput">Full Name:</label>
-      <input type="text" id="nameInput" placeholder="Juan Dela Cruz" />
+      <label for="nameInput">Full Name</label>
+      <input type="text" id="nameInput" placeholder="Juan Dela Cruz" autocomplete="name" />
 
-      <label for="idInput">ID Number:</label>
-      <input type="text" id="idInput" placeholder="123456" />
+      <label for="idInput">ID Number</label>
+      <input type="text" id="idInput" placeholder="123456" autocomplete="off" />
 
       <button id="saveBtn">Save & Generate QR</button>
     </div>
 
     <div id="qrSection" style="display: none">
-      <canvas id="qr"></canvas>
+      <canvas id="qr" width="250" height="250"></canvas>
       <div id="status"></div>
       <button id="resetBtn">Reset / Change Info</button>
     </div>
+  </div>
 
-    <script>
-      const nameKey = "studentName";
-      const idKey = "studentId";
+  <script>
+    const nameKey = "studentName";
+    const idKey = "studentId";
 
-      function showInputForm() {
-        document.getElementById("inputForm").style.display = "block";
-        document.getElementById("qrSection").style.display = "none";
-      }
+    function showInputForm() {
+      document.getElementById("inputForm").style.display = "block";
+      document.getElementById("qrSection").style.display = "none";
+    }
 
-      function showQRSection() {
-        document.getElementById("inputForm").style.display = "none";
-        document.getElementById("qrSection").style.display = "block";
-      }
+    function showQRSection() {
+      document.getElementById("inputForm").style.display = "none";
+      document.getElementById("qrSection").style.display = "block";
+    }
 
-      function generateQRCode(name, id, lat, lng) {
-        const now = new Date();
-        const dateStr = now.toISOString().slice(0, 10); // YYYY-MM-DD
-        const timestamp = now.getTime();
+    function generateQRCode(name, id, lat, lng) {
+      const now = new Date();
+      const dateStr = now.toISOString().slice(0, 10); // YYYY-MM-DD
+      const timestamp = now.getTime();
 
-        const data = {
-          name: name,
-          id: id,
-          date: dateStr,
-          timestamp: timestamp,
-          lat: lat,
-          lng: lng,
-        };
+      const data = {
+        name: name,
+        id: id,
+        date: dateStr,
+        timestamp: timestamp,
+        lat: lat,
+        lng: lng,
+      };
 
-        const jsonData = JSON.stringify(data);
+      const jsonData = JSON.stringify(data);
 
-        const canvas = document.getElementById("qr");
-        QRCode.toCanvas(canvas, jsonData, { width: 250 }, (err) => {
-          if (err) {
-            document.getElementById("status").textContent =
-              "Error generating QR code.";
-            console.error(err);
-          } else {
-            document.getElementById(
-              "status"
-            ).textContent = `QR generated at ${now.toLocaleTimeString()}`;
-          }
-        });
-      }
-
-      function requestLocationAndGenerateQR(name, id) {
-        if (!navigator.geolocation) {
-          alert("Geolocation is not supported by your browser.");
-          return;
-        }
-
-        document.getElementById("status").textContent = "Getting your location...";
-
-        navigator.geolocation.getCurrentPosition(
-          (pos) => {
-            const lat = pos.coords.latitude;
-            const lng = pos.coords.longitude;
-
-            if (
-              typeof lat !== "number" ||
-              typeof lng !== "number" ||
-              isNaN(lat) ||
-              isNaN(lng)
-            ) {
-              alert("Could not get valid location coordinates.");
-              document.getElementById("status").textContent = "Invalid location data.";
-              return;
-            }
-
-            generateQRCode(name, id, lat, lng);
-          },
-          (err) => {
-            alert(
-              "Location permission denied or unavailable. Please allow location access and try again."
-            );
-            document.getElementById("status").textContent = "Location access denied.";
-          },
-          { enableHighAccuracy: true, timeout: 15000 }
-        );
-      }
-
-      window.onload = () => {
-        const storedName = localStorage.getItem(nameKey);
-        const storedId = localStorage.getItem(idKey);
-
-        if (storedName && storedId) {
-          showQRSection();
-          requestLocationAndGenerateQR(storedName, storedId);
+      const canvas = document.getElementById("qr");
+      QRCode.toCanvas(canvas, jsonData, { width: 250 }, (err) => {
+        if (err) {
+          document.getElementById("status").textContent = "Error generating QR code.";
+          console.error(err);
         } else {
-          showInputForm();
+          document.getElementById("status").textContent = `QR generated at ${now.toLocaleTimeString()}`;
         }
-      };
+      });
+    }
 
-      document.getElementById("saveBtn").onclick = () => {
-        const name = document.getElementById("nameInput").value.trim();
-        const id = document.getElementById("idInput").value.trim();
+    function requestLocationAndGenerateQR(name, id) {
+      if (!navigator.geolocation) {
+        alert("Geolocation is not supported by your browser.");
+        return;
+      }
 
-        if (!name || !id) {
-          alert("Please enter both your name and ID number.");
-          return;
-        }
+      document.getElementById("status").textContent = "Getting your location...";
 
-        localStorage.setItem(nameKey, name);
-        localStorage.setItem(idKey, id);
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          const lat = pos.coords.latitude;
+          const lng = pos.coords.longitude;
 
+          if (
+            typeof lat !== "number" ||
+            typeof lng !== "number" ||
+            isNaN(lat) ||
+            isNaN(lng)
+          ) {
+            alert("Could not get valid location coordinates.");
+            document.getElementById("status").textContent = "Invalid location data.";
+            return;
+          }
+
+          generateQRCode(name, id, lat, lng);
+        },
+        (err) => {
+          alert(
+            "Location permission denied or unavailable. Please allow location access and try again."
+          );
+          document.getElementById("status").textContent = "Location access denied.";
+        },
+        { enableHighAccuracy: true, timeout: 15000 }
+      );
+    }
+
+    window.onload = () => {
+      const storedName = localStorage.getItem(nameKey);
+      const storedId = localStorage.getItem(idKey);
+
+      if (storedName && storedId) {
         showQRSection();
-        requestLocationAndGenerateQR(name, id);
-      };
-
-      document.getElementById("resetBtn").onclick = () => {
-        localStorage.removeItem(nameKey);
-        localStorage.removeItem(idKey);
-        document.getElementById("qr").getContext("2d").clearRect(0, 0, 250, 250);
-        document.getElementById("status").textContent = "";
+        requestLocationAndGenerateQR(storedName, storedId);
+      } else {
         showInputForm();
-      };
-    </script>
-  </body>
+      }
+    };
+
+    document.getElementById("saveBtn").onclick = () => {
+      const name = document.getElementById("nameInput").value.trim();
+      const id = document.getElementById("idInput").value.trim();
+
+      if (!name || !id) {
+        alert("Please enter both your name and ID number.");
+        return;
+      }
+
+      localStorage.setItem(nameKey, name);
+      localStorage.setItem(idKey, id);
+
+      showQRSection();
+      requestLocationAndGenerateQR(name, id);
+    };
+
+    document.getElementById("resetBtn").onclick = () => {
+      localStorage.removeItem(nameKey);
+      localStorage.removeItem(idKey);
+      const canvas = document.getElementById("qr");
+      const ctx = canvas.getContext("2d");
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      document.getElementById("status").textContent = "";
+      showInputForm();
+    };
+  </script>
+</body>
 </html>
