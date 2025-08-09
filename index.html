@@ -109,15 +109,13 @@
           return;
         }
 
-        document.getElementById("status").textContent =
-          "Getting your location...";
+        document.getElementById("status").textContent = "Getting your location...";
 
         navigator.geolocation.getCurrentPosition(
           (pos) => {
             const lat = pos.coords.latitude;
             const lng = pos.coords.longitude;
 
-            // Validate lat/lng are numbers
             if (
               typeof lat !== "number" ||
               typeof lng !== "number" ||
@@ -125,8 +123,7 @@
               isNaN(lng)
             ) {
               alert("Could not get valid location coordinates.");
-              document.getElementById("status").textContent =
-                "Invalid location data.";
+              document.getElementById("status").textContent = "Invalid location data.";
               return;
             }
 
@@ -136,8 +133,7 @@
             alert(
               "Location permission denied or unavailable. Please allow location access and try again."
             );
-            document.getElementById("status").textContent =
-              "Location access denied.";
+            document.getElementById("status").textContent = "Location access denied.";
           },
           { enableHighAccuracy: true, timeout: 15000 }
         );
@@ -174,21 +170,10 @@
       document.getElementById("resetBtn").onclick = () => {
         localStorage.removeItem(nameKey);
         localStorage.removeItem(idKey);
-        document
-          .getElementById("qr")
-          .getContext("2d")
-          .clearRect(0, 0, 250, 250);
+        document.getElementById("qr").getContext("2d").clearRect(0, 0, 250, 250);
         document.getElementById("status").textContent = "";
         showInputForm();
       };
-
-      if ("serviceWorker" in navigator) {
-        window.addEventListener("load", () => {
-          navigator.serviceWorker.register("/sw.js").then(() => {
-            console.log("Service Worker registered!");
-          });
-        });
-      }
     </script>
   </body>
 </html>
